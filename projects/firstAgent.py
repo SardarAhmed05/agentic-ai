@@ -89,8 +89,6 @@ def agent():
             "temperature": 0.7
         })
 
-        final_answer = final_response.json()["choices"][0]["message"]["content"]
-
         return final_response.json()["choices"][0]["message"]["content"]
 
     else:
