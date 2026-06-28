@@ -55,45 +55,36 @@ tools = [
 messages = [{"role": "system", "content": "You are a helpful weather assistant."}]
 
 def agent():
-    response = requests.post(url, headers=headers, json={
-        "model": "openai/gpt-oss-20b",
-        "messages": messages,
-        "tools": tools,
-        "temperature": 0.7
-    })
-
-
-    data = response.json()
-    message = data["choices"][0]["message"]
-
-    if message.get("tool_calls"):
-        for tool_call in message["tool_calls"]:
-            function_name = tool_call["function"]["name"]
-            arguments = json.loads(tool_call["function"]["arguments"])
-
-            # call the actual function
-            result = get_weather(arguments["city"])
-
-            messages.append(message)  # add the LLM's tool call request to history
-
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call["id"],
-                "content": result
-            })
-
-        final_response = requests.post(url, headers=headers, json={
+    while True: # ReAct LOOP
+        response = requests.post(url, headers=headers, json={
             "model": "openai/gpt-oss-20b",
             "messages": messages,
             "tools": tools,
             "temperature": 0.7
         })
 
-        return final_response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+        message = data["choices"][0]["message"]
 
-    else:
-        return message["content"]
-    
+        if message.get("tool_calls"):
+            for tool_call in message["tool_calls"]:
+                function_name = tool_call["function"]["name"]
+                arguments = json.loads(tool_call["function"]["arguments"])
+
+                # call the actual function
+                result = get_weather(arguments["city"])
+
+                messages.append(message)  # add the LLM's tool call request to history
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call["id"],
+                    "content": result
+                })
+
+        else:
+            return message["content"]
+
 print("Welcome to the Weather Agent!")
 
 while True:
